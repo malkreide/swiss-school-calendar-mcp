@@ -163,7 +163,11 @@ class SourceStatus(BaseModel):
 
 class StatusResponse(Envelope):
     mcp_protocol_version: str = Field(
-        description="MCP wire protocol version this server is built and tested against."
+        description=(
+            "MCP wire protocol revision served over the `initialize` handshake — "
+            "the ceiling a legacy client negotiates. The same server also serves "
+            "the newer per-request envelope era; a single field cannot name both."
+        )
     )
     sources: list[SourceStatus]
     all_healthy: bool

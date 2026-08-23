@@ -48,6 +48,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   so blieb in `bag-epl-mcp` drei Revisionen lang unbemerkt, dass der Server
   Aufrufern eine falsche Angabe meldete.
 
+- **`Mcp-Session-Id` ist weiterhin freigegeben — und das steht jetzt in einem
+  Test statt in einem Satz.** Der Docstring von `tests/test_cors.py` nannte den
+  Header die Spur einer Mechanik, die `2026-07-28` abgeschafft habe. Das stimmt
+  nicht: `mcp` 2.x bedient beide Protokoll-Aeren, die Session gehoert zur
+  Handshake-Aera, und der Server gibt den Header nicht ohne Grund auch in
+  `expose_headers` frei.
+
+  Nachgemessen statt aus Spec-Text geschlossen: `MCP_SESSION_ID_HEADER` steht
+  unveraendert in `mcp/server/streamable_http.py`, und ein echter `initialize`
+  durch den zusammengebauten ASGI-Stack bekommt eine Session-ID im
+  Antwort-Header zurueck.
+
+  `test_der_session_header_ist_weiterhin_freigegeben` haelt beides fest. Die
+  Gegenprobe zeigt, dass es die Luecke wirklich gab: nimmt man den Header aus
+  der Freigabeliste, faellt genau dieser eine Test, und die sieben bestehenden
+  bleiben gruen.
+
 ### Behoben
 
 - **`source_status` lieferte seit zwei Spec-Revisionen eine falsche

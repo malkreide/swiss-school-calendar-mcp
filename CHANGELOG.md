@@ -14,6 +14,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   bei jeder Verbindung neu auflisten. `resources/read` bleibt ohne Hinweis:
   `holidays://{canton}/{year}` liefert eine Live-Abfrage, kein Verzeichnis.
 
+- **Der Protokoll-Pin sicherte nur eine der beiden Spec-Aeren.** `mcp` 2.x
+  bedient zwei ueber denselben Server; die erste Anfrage einer Verbindung
+  entscheidet, welche gilt: der `initialize`-Handshake deckelt bei
+  `2025-11-25`, der Pro-Request-Envelope erreicht `2026-07-28`.
+
+  Die bisherige Zusicherung lautete `PIN == LATEST_PROTOCOL_VERSION` und las
+  sich vollstaendig. `LATEST_PROTOCOL_VERSION` ist aber ein Alias auf die
+  MODERNE Aera — gesichert war damit die Aera, in der heute praktisch niemand
+  spricht, waehrend die andere frei wandern konnte. Man sieht es dem
+  Konstantennamen nicht an.
+
+  **Der Wert der Konstante aendert sich nicht.** Er war richtig, nur
+  unvollstaendig beschrieben. Neu steht er gegen `LATEST_MODERN_VERSION` —
+  dieselbe Zahl, aber die Aera ist benannt —, die Handshake-Obergrenze bekommt
+  eine eigene Zusicherung, und ein dritter Test haelt die Alias-Eigenschaft
+  fest, damit die Falle beim naechsten Lesen benannt dasteht.
+
+  Ohne gemessenen Teil: dieser Server baut keine ASGI-App, durch die sich ein
+  `initialize` schicken liesse. Die Aushandlung steht in
+  `mcp/server/runner.py::_negotiate_initialize` und haengt an keinem Transport
+  — an neun Schwester-Servern gemessen, hier an den SDK-Konstanten gehalten.
+
+  **Beide READMEs nannten weiterhin `2025-06-18`**, waehrend die Konstante seit
+  der Migration `2026-07-28` traegt — und `source_status` liefert sie als Feld
+  `mcp_protocol_version` an Aufrufer aus.
+
+  Der Test, der diese Auslieferung absichern sollte, hiess
+  `test_source_status_liefert_genau_diesen_pin_aus` und pruefte nur, dass das
+  Feld im Modell EXISTIERT. Er faehrt jetzt den Tool-Aufruf und vergleicht den
+  ausgelieferten Wert — und zwar gegen das SDK, nicht gegen die Konstante, aus
+  der er stammt. Ein Vergleich mit sich selbst ist mit jedem Wert gruen; genau
+  so blieb in `bag-epl-mcp` drei Revisionen lang unbemerkt, dass der Server
+  Aufrufern eine falsche Angabe meldete.
+
 ### Behoben
 
 - **`source_status` lieferte seit zwei Spec-Revisionen eine falsche

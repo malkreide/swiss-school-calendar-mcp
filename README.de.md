@@ -334,10 +334,15 @@ Gemeindeebene publiziert sind); dafür ist keine separate Stadt-Datenquelle nöt
   cachebaren Kontext lesen können, ohne einen Tool-Aufruf. Es gibt keine
   wiederkehrenden Template-Workflows, daher keine **Prompts** (wird neu bewertet,
   falls sich das ändert).
-- **MCP-Protokoll-Version.** Gebaut und getestet gegen Protokoll-Version
-  `2025-06-18` (gepinnt als `MCP_PROTOCOL_VERSION`, ausgewiesen von
-  `source_status`). Die Wire-Version wird vom gepinnten `mcp`-SDK
-  (`mcp>=2.0.0,<3`) ausgehandelt.
+- **MCP-Protokoll-Version — zwei Ären.** `mcp` 2.x bedient beide über denselben
+  Server; die erste Anfrage einer Verbindung entscheidet, welche gilt: der
+  `initialize`-Handshake deckelt bei **`2025-11-25`**, der Pro-Request-Envelope
+  erreicht **`2026-07-28`**. `MCP_PROTOCOL_VERSION` benennt die **moderne** Ära
+  und ist der Wert, den `source_status` im Feld `mcp_protocol_version`
+  ausliefert — ein einzelnes Feld kann nicht beide nennen, also benennt es die
+  eine, und [`tests/test_protocol_version.py`](tests/test_protocol_version.py)
+  hält beide gegen das SDK. Die Wire-Version stammt vom gepinnten `mcp`-SDK
+  (`mcp>=2.0.0,<3`).
 - **Update-Policy.** SDK- und Dependency-Bumps kommen via Dependabot
   (wöchentlich); Protokoll-Version- oder Tool-Definition-Änderungen werden im
   [`CHANGELOG.md`](CHANGELOG.md) mit Versionssprung dokumentiert.

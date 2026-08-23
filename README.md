@@ -333,8 +333,14 @@ separate city data source is required for them.
   (`holidays://<canton>/<year>`) so clients can read a canton's calendar as
   cacheable context without a tool call. There are no recurring templated
   workflows, so **Prompts** are not used (revisited if that changes).
-- **MCP protocol version.** Built and tested against protocol version
-  `2025-06-18` (pinned as `MCP_PROTOCOL_VERSION` and surfaced by `source_status`).
+- **MCP protocol version — two eras.** `mcp` 2.x serves both over the same
+  server, and the client's first request on a connection decides which applies:
+  the `initialize` handshake caps at **`2025-11-25`**, the per-request envelope
+  reaches **`2026-07-28`**. `MCP_PROTOCOL_VERSION` names the **modern** era and
+  is what `source_status` surfaces in its `mcp_protocol_version` field — a
+  single field cannot say both, so it names the one it names, and
+  [`tests/test_protocol_version.py`](tests/test_protocol_version.py) holds both
+  against the SDK.
   The wire version is negotiated by the pinned `mcp` SDK (`mcp>=2.0.0,<3`).
 - **Update policy.** SDK and dependency bumps land via Dependabot (weekly);
   protocol-version or tool-definition changes are recorded in

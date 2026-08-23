@@ -6,6 +6,8 @@ with `FINDING:` so that they survive future refactorings.
 
 from __future__ import annotations
 
+from mcp.types.version import LATEST_HANDSHAKE_VERSION
+
 from ._version import __version__
 
 OPENHOLIDAYS_BASE = "https://openholidaysapi.org"
@@ -17,17 +19,24 @@ NAGER_BASE = "https://date.nager.at/api/v3"
 # + review, documented in docs/network-egress.md.
 ALLOWED_HOSTS = frozenset({"openholidaysapi.org", "date.nager.at"})
 
-# ARCH-012: the MCP protocol version this server is built and tested against.
-# The pinned `mcp` SDK handles the wire version; this constant states it
-# explicitly and is surfaced in `source_status` — which is why it being wrong
-# was worse than a stale comment. It stood at "2025-06-18", two revisions
-# behind the "2026-07-28" the installed SDK speaks, and every `source_status`
-# call reported that stale value to the caller as fact.
+# ARCH-012: the protocol revision `source_status` reports to callers.
 #
+# `mcp` 2.x serves two protocol eras over the same server: the `initialize`
+# handshake, which caps at `LATEST_HANDSHAKE_VERSION`, and the per-request
+# envelope, which reaches `LATEST_MODERN_VERSION`. A single string field cannot
+# name both, so it names the one the caller most likely negotiated — the
+# handshake ceiling. Measured, not inferred from a constant name: a client that
+# asks the handshake for the modern revision gets `2025-11-25` back.
+#
+# Derived, not written down. A literal here is a second truth beside the SDK,
+# and second truths drift: this constant stood at "2025-06-18" for two
+# revisions while every `source_status` call reported it to the caller as fact.
 # Nothing caught it, because nothing compared it to anything.
-# `tests/test_protocol_version.py` now holds it against the SDK's own
-# `LATEST_PROTOCOL_VERSION`.
-MCP_PROTOCOL_VERSION = "2026-07-28"
+# `tests/test_protocol_version.py` holds both eras against the SDK and checks
+# the delivered field against `LATEST_HANDSHAKE_VERSION` rather than against
+# this constant — a comparison with the value's own source is green for any
+# value.
+MCP_PROTOCOL_VERSION = LATEST_HANDSHAKE_VERSION
 
 # SEC-018: bounds for numeric tool inputs (no unbounded ranges).
 MIN_YEAR = 1970

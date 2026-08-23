@@ -227,6 +227,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   now raises `ValueError` rather than failing quietly — but only once the HTTP
   path actually runs, which nothing in the suite asserted.
 
+- **`source_status` meldet jetzt die Handshake-Obergrenze statt der modernen
+  Revision.** Das Feld `mcp_protocol_version` trug `2026-07-28`; ausgeliefert
+  wird jetzt `2025-11-25`.
+
+  `mcp` 2.x bedient zwei Protokoll-Aeren ueber denselben Server, und ein
+  einzelner String kann nicht beide nennen. Er nennt jetzt die, die ein
+  Aufrufer ueber den `initialize`-Handshake tatsaechlich aushandelt —
+  nachgemessen und nicht aus einem Konstantennamen geschlossen: wer ueber den
+  Handshake nach `2026-07-28` fragt, bekommt `2025-11-25` zurueck.
+
+  `MCP_PROTOCOL_VERSION` wird dafuer aus `LATEST_HANDSHAKE_VERSION` abgeleitet
+  statt hingeschrieben. Ein Literal an dieser Stelle ist eine zweite Wahrheit
+  neben dem SDK, und zweite Wahrheiten driften: diese stand zwei Revisionen
+  lang auf `2025-06-18`, waehrend jede Abfrage den Wert als Tatsache ausgab.
+
+  Die Feldbeschreibung im Modell sagt jetzt, welche Aera der Wert benennt, und
+  beide READMEs erklaeren, warum es nicht die andere ist. **Fuer Aufrufer ist
+  das eine Verhaltensaenderung** — der gemeldete String aendert sich.
+
 ### Added
 
 - **`tests/test_transport_security.py` — inbound Host pinning is now asserted.**

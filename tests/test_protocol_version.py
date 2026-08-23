@@ -8,14 +8,17 @@ Anfrage einer Verbindung entscheidet, welche gilt:
 * die **Modern-Aera** mit Pro-Request-Envelope, die `LATEST_MODERN_VERSION`
   erreicht.
 
-`MCP_PROTOCOL_VERSION` beschreibt die MODERNE Aera. Das war bisher nicht gesagt,
-und die Zusicherung daneben zeigte auf `LATEST_PROTOCOL_VERSION` — ein Alias
-auf genau diese Version. Derselbe Wert, aber der Name verschweigt, dass es eine
-zweite Aera gibt, und die konnte damit frei wandern. Sie steht jetzt daneben.
+`MCP_PROTOCOL_VERSION` benennt die HANDSHAKE-Aera und wird aus
+`LATEST_HANDSHAKE_VERSION` abgeleitet. Das ist eine bewusste Aenderung
+gegenueber der vorigen Fassung, in der die Konstante die moderne Aera nannte:
+`source_status` liefert sie als Feld `mcp_protocol_version` an Aufrufer aus,
+und ein einzelnes Feld kann nicht beide Aeren nennen. Es nennt die, die ein
+Aufrufer am ehesten ausgehandelt hat.
 
-**Der Wert der Konstante aendert sich nicht.** Er war richtig, nur
-unvollstaendig beschrieben — anders als in `bag-epl-mcp` und `parlament-mcp`,
-wo eine Konstante drei Revisionen hinterherhinkte und korrigiert werden musste.
+Abgeleitet statt hingeschrieben: ein Literal waere eine zweite Wahrheit neben
+dem SDK, und zweite Wahrheiten driften. Diese hier stand zwei Revisionen lang
+auf `2025-06-18`, waehrend jede `source_status`-Abfrage den Wert als Tatsache
+ausgab.
 
 Ohne gemessenen Teil: dieses Repo baut keine ASGI-App, durch die sich ein
 `initialize` schicken liesse. Die Aushandlung steht in
@@ -45,34 +48,38 @@ README_SECTIONS = (
     ("README.de.md", "## MCP-Primitive & Protokoll-Version"),
 )
 
-# Die Obergrenze der Handshake-Aera. Sie steht hier und nicht im `src/`: der
-# Server setzt sie nicht, das SDK bestimmt sie. Eine zweite Konstante im
-# Auslieferungspfad waere eine zweite Wahrheit, die driften kann.
+# Die beiden Revisionen, die die READMEs nennen. Sie stehen hier und nicht im
+# `src/`: der Server setzt sie nicht, das SDK bestimmt sie.
 DOCUMENTED_HANDSHAKE_VERSION = "2025-11-25"
+DOCUMENTED_MODERN_VERSION = "2026-07-28"
 
 
-def test_der_pin_nennt_die_moderne_revision_des_installierten_sdk() -> None:
-    """Wie bisher, nur gegen die benannte Konstante statt gegen den Alias.
-
-    Faellt das hier, ist die Loesung nicht, den Wert blind nachzuziehen: erst
+def test_die_moderne_aera_steht_wo_die_readmes_sie_nennen() -> None:
+    """Faellt das hier, ist die Loesung nicht, den Wert blind nachzuziehen: erst
     das Spec-Changelog zwischen den beiden Revisionen lesen, das
-    Serververhalten pruefen, dann Konstante, READMEs und `CHANGELOG.md` in
+    Serververhalten pruefen, dann Konstanten, READMEs und `CHANGELOG.md` in
     einem Commit anheben.
     """
-    assert MCP_PROTOCOL_VERSION == LATEST_MODERN_VERSION, (
-        f"gepinnt {MCP_PROTOCOL_VERSION}, das SDK erreicht modern {LATEST_MODERN_VERSION}"
+    assert LATEST_MODERN_VERSION == DOCUMENTED_MODERN_VERSION, (
+        f"das SDK erreicht modern jetzt {LATEST_MODERN_VERSION}, "
+        f"die READMEs sagen {DOCUMENTED_MODERN_VERSION}"
     )
 
 
-def test_die_handshake_aera_steht_wo_die_readmes_sie_nennen() -> None:
-    """Die Aera, die bestehende Clients sprechen — und die bisher niemand hielt.
+def test_der_ausgelieferte_pin_nennt_die_handshake_obergrenze() -> None:
+    """Die Aera, die bestehende Clients sprechen — und die `source_status` meldet.
 
     Ein Client, der ueber den `initialize`-Handshake nach der modernen Revision
     fragt, bekommt diese Obergrenze zurueck, nicht das, wonach er gefragt hat.
+    Genau deshalb nennt das Feld sie und nicht die moderne Revision.
     """
     assert LATEST_HANDSHAKE_VERSION == DOCUMENTED_HANDSHAKE_VERSION, (
         f"das SDK deckelt den Handshake jetzt bei {LATEST_HANDSHAKE_VERSION}, "
         f"die READMEs sagen {DOCUMENTED_HANDSHAKE_VERSION}"
+    )
+    assert MCP_PROTOCOL_VERSION == LATEST_HANDSHAKE_VERSION, (
+        f"die Konstante nennt {MCP_PROTOCOL_VERSION}, das SDK deckelt bei "
+        f"{LATEST_HANDSHAKE_VERSION} — sie ist wieder ein Literal geworden"
     )
 
 
@@ -97,7 +104,7 @@ def test_die_beiden_aeren_sind_verschieden() -> None:
 
 def test_die_pins_sind_datierte_revisionen_und_keine_beweglichen_ziele() -> None:
     """«latest» oder eine Spanne waeren keine Festlegung."""
-    for value in (MCP_PROTOCOL_VERSION, DOCUMENTED_HANDSHAKE_VERSION):
+    for value in (MCP_PROTOCOL_VERSION, DOCUMENTED_HANDSHAKE_VERSION, DOCUMENTED_MODERN_VERSION):
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", value), value
 
 
@@ -113,7 +120,11 @@ def test_beide_readmes_nennen_beide_revisionen() -> None:
         parts = text.split(anchor, 1)
         assert len(parts) > 1, f"{name} hat keinen Abschnitt «{anchor}»"
         body = parts[1][:2500]
-        for value in (MCP_PROTOCOL_VERSION, DOCUMENTED_HANDSHAKE_VERSION):
+        for value in (
+            MCP_PROTOCOL_VERSION,
+            DOCUMENTED_HANDSHAKE_VERSION,
+            DOCUMENTED_MODERN_VERSION,
+        ):
             assert value in body, f"{name} nennt {value} nicht im Abschnitt «{anchor}»"
 
 
@@ -126,9 +137,10 @@ async def test_source_status_liefert_genau_diesen_pin_aus() -> None:
     `2025-06-18` an Aufrufer ging. Jetzt wird der Tool-Aufruf gefahren und der
     ausgelieferte Wert verglichen.
 
-    Warum die moderne Revision und nicht die Handshake-Obergrenze: ein
-    einzelnes Feld kann nicht beide Aeren nennen. Es benennt die, die die
-    Konstante benennt, und die READMEs sagen welche.
+    Warum die Handshake-Obergrenze und nicht die moderne Revision: ein
+    einzelnes Feld kann nicht beide Aeren nennen, und ein Aufrufer, der diesen
+    Server ueber den `initialize`-Handshake erreicht, hat genau diese
+    ausgehandelt. Die READMEs sagen es dazu.
     """
     from mcp import Client
 
@@ -144,7 +156,8 @@ async def test_source_status_liefert_genau_diesen_pin_aus() -> None:
         result = await client.call_tool("source_status", {})
 
     # Gegen das SDK, nicht gegen `MCP_PROTOCOL_VERSION`: ein Vergleich mit der
-    # Konstante, aus der der Wert stammt, ist mit jedem Wert gruen. Genau so
-    # blieb in `bag-epl-mcp` drei Revisionen lang unbemerkt, dass der Server
+    # Konstante, aus der der Wert stammt, ist mit jedem Wert gruen — auch dann,
+    # wenn jemand die Ableitung wieder durch ein Literal ersetzt. Genau so blieb
+    # in `bag-epl-mcp` drei Revisionen lang unbemerkt, dass der Server
     # Aufrufern eine falsche Angabe meldete.
-    assert result.structured_content["mcp_protocol_version"] == LATEST_MODERN_VERSION
+    assert result.structured_content["mcp_protocol_version"] == LATEST_HANDSHAKE_VERSION

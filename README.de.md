@@ -337,12 +337,23 @@ Gemeindeebene publiziert sind); dafür ist keine separate Stadt-Datenquelle nöt
 - **MCP-Protokoll-Version — zwei Ären.** `mcp` 2.x bedient beide über denselben
   Server; die erste Anfrage einer Verbindung entscheidet, welche gilt: der
   `initialize`-Handshake deckelt bei **`2025-11-25`**, der Pro-Request-Envelope
-  erreicht **`2026-07-28`**. `MCP_PROTOCOL_VERSION` benennt die **moderne** Ära
-  und ist der Wert, den `source_status` im Feld `mcp_protocol_version`
-  ausliefert — ein einzelnes Feld kann nicht beide nennen, also benennt es die
-  eine, und [`tests/test_protocol_version.py`](tests/test_protocol_version.py)
-  hält beide gegen das SDK. Die Wire-Version stammt vom gepinnten `mcp`-SDK
-  (`mcp>=2.0.0,<3`).
+  erreicht **`2026-07-28`**.
+
+  `source_status` liefert eine davon im Feld `mcp_protocol_version` aus — ein
+  einzelner String kann nicht beide nennen — und zwar die
+  **Handshake-Obergrenze**, denn die hat ein Client, der diesen Server über
+  `initialize` erreicht, tatsächlich ausgehandelt. Nachgemessen statt aus einem
+  Konstantennamen geschlossen: wer über den Handshake nach `2026-07-28` fragt,
+  bekommt `2025-11-25` zurück.
+
+  `MCP_PROTOCOL_VERSION` wird aus `LATEST_HANDSHAKE_VERSION` des SDK abgeleitet
+  statt hingeschrieben und kann damit nicht mehr driften, wie sie es schon
+  einmal tat — sie stand zwei Revisionen lang auf `2025-06-18`, während jede
+  Abfrage den Wert als Tatsache ausgab.
+  [`tests/test_protocol_version.py`](tests/test_protocol_version.py) hält beide
+  Ären gegen das SDK und prüft auch das ausgelieferte Feld gegen das SDK, nicht
+  gegen die Konstante, aus der es stammt. Die Wire-Version stammt vom gepinnten
+  `mcp`-SDK (`mcp>=2.0.0,<3`).
 - **Update-Policy.** SDK- und Dependency-Bumps kommen via Dependabot
   (wöchentlich); Protokoll-Version- oder Tool-Definition-Änderungen werden im
   [`CHANGELOG.md`](CHANGELOG.md) mit Versionssprung dokumentiert.

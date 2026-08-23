@@ -336,11 +336,20 @@ separate city data source is required for them.
 - **MCP protocol version — two eras.** `mcp` 2.x serves both over the same
   server, and the client's first request on a connection decides which applies:
   the `initialize` handshake caps at **`2025-11-25`**, the per-request envelope
-  reaches **`2026-07-28`**. `MCP_PROTOCOL_VERSION` names the **modern** era and
-  is what `source_status` surfaces in its `mcp_protocol_version` field — a
-  single field cannot say both, so it names the one it names, and
+  reaches **`2026-07-28`**.
+
+  `source_status` surfaces one of them in its `mcp_protocol_version` field — a
+  single string cannot name both — and it surfaces the **handshake ceiling**,
+  because that is what a client reaching this server over `initialize` actually
+  negotiated. Measured, not inferred from a constant name: a client asking the
+  handshake for `2026-07-28` gets `2025-11-25` back.
+
+  `MCP_PROTOCOL_VERSION` is derived from the SDK's `LATEST_HANDSHAKE_VERSION`
+  rather than written down, so it cannot drift the way it once did — it stood
+  at `2025-06-18` for two revisions while every call reported it as fact.
   [`tests/test_protocol_version.py`](tests/test_protocol_version.py) holds both
-  against the SDK.
+  eras against the SDK and checks the delivered field against the SDK too, not
+  against the constant it came from.
   The wire version is negotiated by the pinned `mcp` SDK (`mcp>=2.0.0,<3`).
 - **Update policy.** SDK and dependency bumps land via Dependabot (weekly);
   protocol-version or tool-definition changes are recorded in
